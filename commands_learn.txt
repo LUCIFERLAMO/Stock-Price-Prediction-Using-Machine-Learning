@@ -1,4 +1,0 @@
-Requests
-
-response.text = gives the text
-response.status_code = gives the status code
