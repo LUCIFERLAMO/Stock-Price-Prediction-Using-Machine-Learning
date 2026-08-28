@@ -53,7 +53,7 @@ rows = soup.find_all("tr")
 # ---------- taking the contents of the first row -----------------
 
 content_of_cell = soup.find_all("td")
-print(len(content_of_cell))
+#print(len(content_of_cell))
 
 # printing the contents
 
@@ -111,10 +111,10 @@ for row in rows[1:]: # we r satrting from 1 as 0 is the header
 import pandas as pd
 
 df = pd.DataFrame(dates_and_high_and_low,columns=["Date","high","low"])
-print(df)
+#print(df)
 
 
-print(df.info())
+#print(df.info())
 
 
 # ---------- converting the string high and low to numarice numbers -------------
@@ -123,15 +123,15 @@ df["high"] = pd.to_numeric(df["high"])
 df["low"] = pd.to_numeric(df["low"])
 df["Date"] = pd.to_datetime(df["Date"]) # converting it as an actual date object so that python can handle it as an date 
 
-print(df.info())
+#print(df.info())
 
 
 # checking if the data is clean 
 
-print(df.head())
-print("\nNumber of records:", len(df))
-print("\nMissing values:")
-print(df.isnull().sum()) # sums up if there r any missing values in each column and shows it here
+#print(df.head())
+#print("\nNumber of records:", len(df))
+#print("\nMissing values:")
+#print(df.isnull().sum()) # sums up if there r any missing values in each column and shows it here
 
 
 # done for the day 
@@ -141,7 +141,7 @@ print(df.isnull().sum()) # sums up if there r any missing values in each column 
 # sorting the values in ascending order 
 
 df = df.sort_values(["Date"])
-print(df)
+#print(df)
 
 # now we r adding a new column called next_high
 
@@ -154,4 +154,70 @@ df["Next_Low"] = df["low"].shift(-1)
 # we r proving the question what is the stock price for monday and we r giving the answer for it so that it learns the pattern
 print(df)
 
+# now we have a nan value in the botton of the 2 new columns we created so we will remove them
+
+df = df.dropna()
+
+#print(df.tail())
+
+# ------------------- this is what we will give to the model ----------
+
+
+# this is the high and low we will show to the model stored in a variable called x
+x = df[["high","low"]]
+
+
+# the high and low values which the mmodel will use to learn the pattern from its prediction to the actual value
+Y_high = df["Next_high"]
+Y_low = df["Next_Low"]
+
+
+
+# ------------------ now we will divide the data into 2 halfs (one for training and one for testing) ---------------'
+
+
+
+# Training data → the model learns patterns from it.
+# Testing data → we give the model data it hasn't seen before and check how accurate its predictions are
+
+split_data = int(len(x) * 0.8) # taking 80 ercentage of the data as training and rest 20 as testing
+
+# so if we have 100 rows then we will take 80 of them for training the model and rest 20 for testing 
+
+
+# spliting the data 
+x_train = x.iloc[:split_data] 
+x_test = x.iloc[split_data:]
+
+# spliting the high
+y_high_train = Y_high.iloc[:split_data] 
+y_high_test = Y_high.iloc[split_data:] # same as y_high[:split_data] we r using iloc jist to specifically tell we want to split suing the index
+
+# spliting the low
+y_low_train = Y_low.iloc[:split_data]
+y_low_test = Y_low.iloc[split_data:]
+
+#training and testing dates
+
+Train_date = df["Date"].iloc[:split_data]
+Test_date = df["Date"].iloc[split_data:]
+
+
+print("===== TRAINING DATA =====")
+print(x_train)
+
+print("\n===== TESTING DATA =====")
+print(x_test)
+
+print("\n===== TRAINING TARGET: NEXT HIGH =====")
+print(y_high_train)
+
+print("\n===== TESTING TARGET: NEXT HIGH =====")
+print(y_high_test)
+
+print("\n===== TRAINING TARGET: NEXT LOW =====")
+print(y_low_train)
+
+print("\n===== TESTING TARGET: NEXT LOW =====")
+print(y_low_test)
 
