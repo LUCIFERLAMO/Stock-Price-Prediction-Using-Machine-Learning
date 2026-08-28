@@ -25,7 +25,7 @@ soup = BeautifulSoup(response.text,"html.parser") #takes that messy HTML and org
 # print(soup.title) # Find the <title> of this webpage and print it
 
 tables = soup.find_all("table")
-print(f"Number of tables {len(tables)}")
+#print(f"Number of tables {len(tables)}")
 
 
 # choosing the first table
@@ -152,7 +152,8 @@ df["Next_Low"] = df["low"].shift(-1)
 
 # as we r doing supervised learning where we give the question and the label for it
 # we r proving the question what is the stock price for monday and we r giving the answer for it so that it learns the pattern
-print(df)
+
+#print(df)
 
 # now we have a nan value in the botton of the 2 new columns we created so we will remove them
 
@@ -203,21 +204,70 @@ Train_date = df["Date"].iloc[:split_data]
 Test_date = df["Date"].iloc[split_data:]
 
 
-print("===== TRAINING DATA =====")
-print(x_train)
+#print("===== TRAINING DATA =====")
+#print(x_train)
 
-print("\n===== TESTING DATA =====")
-print(x_test)
+#print("\n===== TESTING DATA =====")
+#print(x_test)
 
-print("\n===== TRAINING TARGET: NEXT HIGH =====")
-print(y_high_train)
+#print("\n===== TRAINING TARGET: NEXT HIGH =====")
+#print(y_high_train)
 
-print("\n===== TESTING TARGET: NEXT HIGH =====")
-print(y_high_test)
+#print("\n===== TESTING TARGET: NEXT HIGH =====")
+#print(y_high_test)
 
-print("\n===== TRAINING TARGET: NEXT LOW =====")
-print(y_low_train)
+#print("\n===== TRAINING TARGET: NEXT LOW =====")
+#print(y_low_train)
 
-print("\n===== TESTING TARGET: NEXT LOW =====")
+#print("\n===== TESTING TARGET: NEXT LOW =====")
+#print(y_low_test)
+
+# --------------------------------------------------------
+# we r using regression model
+# A regression model is a machine-learning model used to predict a numerical value.
+
+from sklearn.linear_model import LinearRegression
+
+# Create a Linear Regression model for predicting tomorrow's High, think of it as a empty student   
+high_model = LinearRegression()
+
+#print(high_model)
+
+
+# -------------------- Training to predict for the high value ----------------------
+
+# so to train the model we use fit(data,label)
+
+high_model.fit(x_train,y_high_train) # its like saying this is the data to the mode and this is answer now find the relation btw them
+#print("High prediction model trained successfully.")
+
+
+# now we r seeing how well the model predicts
+
+model_predictions = high_model.predict(x_test)
+
+#print("Actual values:")
+#print(y_high_test)
+
+#print("predicted values:")
+#print(model_predictions)
+
+# ----------------------------- training to predict for the lower value -------------------
+
+lower_model = LinearRegression()
+
+# teach the model
+
+lower_model.fit(x_train,y_low_train)
+print("lower Trained")
+
+# predicting the values and comparing it with the actual results
+
+predict_lower_values = lower_model.predict(x_test)
+
+print("Actual Data:")
 print(y_low_test)
 
+
+print("predicted values:")
+print(predict_lower_values)
