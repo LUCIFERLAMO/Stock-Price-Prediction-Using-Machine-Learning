@@ -259,15 +259,52 @@ lower_model = LinearRegression()
 # teach the model
 
 lower_model.fit(x_train,y_low_train)
-print("lower Trained")
+#print("lower Trained")
 
 # predicting the values and comparing it with the actual results
 
 predict_lower_values = lower_model.predict(x_test)
 
-print("Actual Data:")
-print(y_low_test)
+#print("Actual Data:")
+#print(y_low_test)
 
 
-print("predicted values:")
-print(predict_lower_values)
+#print("predicted values:")
+#print(predict_lower_values)
+
+# ----------------------------------------------------------------------
+
+# now that we have trained out model we need to see how much error did the model make compared to the actual value
+
+# we will use Mean Absolute Error (MAE).
+# MAE tells us, on average, how many rupees our prediction was away from the actual value.
+
+from sklearn.metrics import mean_absolute_error
+
+# syntax = mean_absolute_error(test_data,model_predictions)
+
+ # calculate the average error for High predictions
+
+high_mae = mean_absolute_error(y_high_test,model_predictions)
+
+
+# calculate the average error for low predictions
+
+low_mae = mean_absolute_error(y_low_test,predict_lower_values)
+
+
+
+print("High prediction MAE:", high_mae)
+print("Low prediction MAE:", low_mae)
+
+# creating a dataframe to see the date the actual high and the prdicted high and low and predicted low for good refference 
+
+result = pd.DataFrame({
+    "Date":Test_date,
+    "Actual high":y_high_test,
+    "Predicted high":model_predictions,
+    "Actual low":y_low_test,
+    "Predicted low":predict_lower_values
+})
+
+print(result)
