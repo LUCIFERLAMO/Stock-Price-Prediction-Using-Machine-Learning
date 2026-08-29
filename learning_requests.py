@@ -101,8 +101,16 @@ for row in rows[1:]: # we r satrting from 1 as 0 is the header
     high = cell[2].get_text(strip=True)
     low = cell[3].get_text(strip=True)
 
+    # adding more features to imporve the prediction
+
+    open_price = cell[1].get_text(strip=True)
+    close = cell[4].get_text(strip=True)
+    trades = cell[5].get_text(strip=True)
+
     #print(f"date: {date}, high: {high}, low: {low}")
-    dates_and_high_and_low.append([date,high,low])
+    dates_and_high_and_low.append([date,open_price,high,low,close,trades])
+
+
 
 
 
@@ -110,7 +118,7 @@ for row in rows[1:]: # we r satrting from 1 as 0 is the header
 
 import pandas as pd
 
-df = pd.DataFrame(dates_and_high_and_low,columns=["Date","high","low"])
+df = pd.DataFrame(dates_and_high_and_low,columns=["Date","open_price","high","low","close","trades"])
 #print(df)
 
 
@@ -122,6 +130,10 @@ df = pd.DataFrame(dates_and_high_and_low,columns=["Date","high","low"])
 df["high"] = pd.to_numeric(df["high"])
 df["low"] = pd.to_numeric(df["low"])
 df["Date"] = pd.to_datetime(df["Date"]) # converting it as an actual date object so that python can handle it as an date 
+
+df["open_price"] = pd.to_numeric(df["open_price"])
+df["close"] = pd.to_numeric(df["close"])
+df["trades"] = pd.to_numeric(df["trades"].str.replace(",",""))
 
 #print(df.info())
 
@@ -159,13 +171,14 @@ df["Next_Low"] = df["low"].shift(-1)
 
 df = df.dropna()
 
-#print(df.tail())
+#print(df.head())
+#print(df.columns)
 
 # ------------------- this is what we will give to the model ----------
 
 
 # this is the high and low we will show to the model stored in a variable called x
-x = df[["high","low"]]
+x = df[["open_price", "high", "low", "close", "trades"]]
 
 
 # the high and low values which the mmodel will use to learn the pattern from its prediction to the actual value
@@ -307,4 +320,6 @@ result = pd.DataFrame({
     "Predicted low":predict_lower_values
 })
 
-print(result)
+#print(result)
+
+
