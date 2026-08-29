@@ -143,10 +143,13 @@ model_data = df.dropna(subset=["Previous_Close","Previous_High","Previous_Low","
 
 latest_day = df.iloc[-1]
 
+
 print("Training/testing records:", len(model_data))
 
 #print("\nLatest trading day:")
 #print(latest_day)
+
+latest_date = latest_day["Date"]
 
 print("\nLatest date:", latest_day["Date"])
 print("Latest High:", latest_day["High"])
@@ -258,10 +261,10 @@ high_mae_lr = mean_absolute_error(y_high_test,lr_high_prediction)
 
 low_mae_lr = mean_absolute_error(y_low_test,lr_low_prediction)
 
-print("=" *50)
-print(f"High MAE: {high_mae_lr}")
-print(f"low MAE: {low_mae_lr}")
-print("=" *50)
+#print("=" *50)
+#print(f"High MAE: {high_mae_lr}")
+#print(f"low MAE: {low_mae_lr}")
+#print("=" *50)
 
 
 # ---- the model gave us unhappy results 
@@ -305,27 +308,28 @@ print("=" *50)
 
 
 # so now we r tryning to find what did the linear regression model learn from each model
-print("===== HIGH MODEL =====")
 
-for feature, coefficient in zip(x_train.columns, high_model_lr.coef_): 
+#print("===== HIGH MODEL =====")
+
+#for feature, coefficient in zip(x_train.columns, high_model_lr.coef_): 
 # when u train the model (fit) the linear regression makes a co-effiecnt of every feature it has been trained on.
 # So when u see smt like Previous_Close: 2.6083920393298408e-15 it says how much this feature affects the final output
-    print(f"{feature}: {coefficient}")
+#    print(f"{feature}: {coefficient}")
 
 
-print("\nIntercept:", high_model_lr.intercept_)
+#print("\nIntercept:", high_model_lr.intercept_)
 # intercept means - before we train the model we will have a starting value of the data we have and then from that data we reduce or add values based on our co efficents 
 
 
-print("\n===== LOW MODEL =====")
+#print("\n===== LOW MODEL =====")
 
-for feature, coefficient in zip(x_train.columns, low_model_lr.coef_):
-    print(f"{feature}: {coefficient}")
+#for feature, coefficient in zip(x_train.columns, low_model_lr.coef_):
+#    print(f"{feature}: {coefficient}")
 
 
-print("\nIntercept:", low_model_lr.intercept_)
+#print("\nIntercept:", low_model_lr.intercept_)
 
-print("=" * 70)
+#print("=" * 70)
 
 # things learnt
 
@@ -445,6 +449,80 @@ predicted_high = high_model_lr.predict(latest_data)[0]
 predicted_low = low_model_lr.predict(latest_data)[0]
 
 
-print("===== NEXT DAY PREDICTION =====")
-print(f"Predicted High: {predicted_high:.2f}")
-print(f"Predicted Low:  {predicted_low:.2f}")
+# implementing tkintker for the gui 
+
+import tkinter as tk
+
+root = tk.Tk()
+root.title("Stock Price Calculator")
+root.geometry("600x400")
+
+# ---- adding a labels 
+
+# -- title
+
+title_label = tk.Label(
+    root,
+    text = "STOCK PRICE PREDICTOR",
+    font=("arial",22,"bold")
+    )
+
+title_label.pack(pady=40)
+
+
+# --- stock name
+
+stock_name = tk.Label(
+    root,
+    text = "GMR Airport",
+    font=("Arial",16)
+)
+
+stock_name.pack(pady=10)
+
+# ---  latest_date
+
+day = tk.Label(
+    root,
+    text = f"Date:{latest_date}",
+    font=("Arial",12)
+)
+
+day.pack(pady=10)
+
+# here pady is giving space top and bottom
+# padx is giving space left and rigth side
+
+# ---------------- BUTTON FUNCTION ----------------
+
+def predict():
+    result_label.config(
+        text=f"predicted High:{predicted_high:.2f}\n"
+             f"Predicted Low:{predicted_low:.2f}"
+    )
+
+
+# ---------------- PREDICT BUTTON ----------------
+
+predict_button = tk.Button(
+    root,
+    text="PREDICT",
+    font=("Arial", 14, "bold"),
+    command=predict
+)
+
+predict_button.pack(pady=20)
+
+
+# ---------------- RESULT ----------------
+
+result_label = tk.Label(
+    root,
+    text="",
+    font=("Arial", 14)
+)
+
+result_label.pack(pady=10)
+
+
+root.mainloop() 
