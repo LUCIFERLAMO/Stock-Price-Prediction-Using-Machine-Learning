@@ -156,9 +156,16 @@ df = df.sort_values(["Date"])
 #print(df)
 
 # now we r adding a new column called next_high
-
+# we will use the next values to terain the model this was the high and low of the next day 
 df["Next_high"] = df["high"].shift(-1) # it removes the top value and appends the value below the top to the top, and the last value below that column will be nil
 df["Next_Low"] = df["low"].shift(-1)
+
+# we will use the next values to terain the model this was the high and low of the previous day 
+
+
+df["previous_high"] = df["high"].shift(1)
+df["previous_low"] = df["low"].shift(1)
+df["previous_close"] = df["close"].shift(1)
 
 # why r we doing this ?
 
@@ -171,14 +178,14 @@ df["Next_Low"] = df["low"].shift(-1)
 
 df = df.dropna()
 
-#print(df.head())
+print(df.head())
 #print(df.columns)
 
 # ------------------- this is what we will give to the model ----------
 
 
 # this is the high and low we will show to the model stored in a variable called x
-x = df[["open_price", "high", "low", "close", "trades"]]
+x = df[["previous_high", "previous_low","high", "low", "close",]]
 
 
 # the high and low values which the mmodel will use to learn the pattern from its prediction to the actual value
@@ -307,8 +314,8 @@ low_mae = mean_absolute_error(y_low_test,predict_lower_values)
 
 
 
-print("High prediction MAE:", high_mae)
-print("Low prediction MAE:", low_mae)
+#print("High prediction MAE:", high_mae)
+#print("Low prediction MAE:", low_mae)
 
 # creating a dataframe to see the date the actual high and the prdicted high and low and predicted low for good refference 
 
@@ -323,3 +330,41 @@ result = pd.DataFrame({
 #print(result)
 
 
+# ---------------------- we will try Random forest regression ----------------
+# random forest regression os good for non linear (realtion that changes based on the situation)
+# Random Forest = many decision trees working together.
+
+from sklearn.ensemble import RandomForestRegressor
+
+predict_high_model_rf = RandomForestRegressor(
+    n_estimators= 100, # creating 100 decision trees where each will make a -prediction on what the high will be for tmr and the avg will be taken of all the 100 predictions made
+    random_state=42 
+)
+
+predict_low_model_rf = RandomForestRegressor(
+    n_estimators= 100,
+    random_state=42
+)
+
+# ----- train ------
+
+predict_high_model_rf.fit(x_train,y_high_train)
+
+predict_low_model_rf.fit(x_train,y_low_train)
+
+# ----- predict -----
+
+rf_high_predict = predict_high_model_rf.predict(x_test)
+
+rf_low_predict = predict_low_model_rf.predict(x_test)
+
+# ---- calculate MAE ------
+
+rf_high_MAE = mean_absolute_error(y_high_test,rf_high_predict)
+
+rf_low_MAE = mean_absolute_error(y_low_test,rf_low_predict)
+
+# ----- print -----
+
+print("Random Forest High MAE:", rf_high_MAE)
+print("Random Forest Low MAE:", rf_low_MAE)
