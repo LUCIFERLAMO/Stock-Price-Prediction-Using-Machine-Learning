@@ -338,31 +338,113 @@ print("=" * 70)
 
 # -- seeing the predictions it makes 
 
-print("===== HIGH PREDICTIONS =====")
+#print("===== HIGH PREDICTIONS =====")
 
-for date, actual, predicted in zip(
-    test_dates,
-    y_high_test,
-    lr_high_prediction
-):
-    print(
-        f"{date.date()} | "
-        f"Actual: {actual:.2f} | "
-        f"Predicted: {predicted:.2f} | "
-        f"Error: {abs(actual - predicted):.2f}"
-    )
+#for date, actual, predicted in zip(
+#    test_dates,
+#    y_high_test,
+#    lr_high_prediction
+#):
+#    print(
+#        f"{date.date()} | "
+#        f"Actual: {actual:.2f} | "
+#        f"Predicted: {predicted:.2f} | "
+#        f"Error: {abs(actual - predicted):.2f}"
+#    )
 
 
-print("\n===== LOW PREDICTIONS =====")
+#print("\n===== LOW PREDICTIONS =====")
 
-for date, actual, predicted in zip(
-    test_dates,
-    y_low_test,
-    lr_low_prediction
-):
-    print(
-        f"{date.date()} | "
-        f"Actual: {actual:.2f} | "
-        f"Predicted: {predicted:.2f} | "
-        f"Error: {abs(actual - predicted):.2f}"
-    )
+#for date, actual, predicted in zip(
+#    test_dates,
+#    y_low_test,
+#    lr_low_prediction
+#):
+#    print(
+#        f"{date.date()} | "
+#        f"Actual: {actual:.2f} | "
+#        f"Predicted: {predicted:.2f} | "
+#        f"Error: {abs(actual - predicted):.2f}"
+#    )
+
+# the difference is good 
+
+# now we will try to use random forest to check the result how it will be 
+
+#from sklearn.ensemble import RandomForestRegressor
+
+# ---------- high model
+
+#high_model_rf = RandomForestRegressor(
+#    n_estimators=100,
+#    random_state=42
+#)
+
+# --- train 
+
+#high_model_rf.fit(x_train,y_high_train)
+
+#rf_high_prediction = high_model_rf.predict(x_test)
+
+# ---------- low model
+
+#low_model_rf = RandomForestRegressor(
+#    n_estimators=100,
+#    random_state=42
+#)
+
+#low_model_rf.fit(x_train,y_low_train)
+
+#rf_low_prediction = low_model_rf.predict(x_test)
+
+# ---- calculate the MAE
+
+#high_mae_rf = mean_absolute_error(
+#    y_high_test,
+#    rf_high_prediction
+#)
+
+#low_mae_rf = mean_absolute_error(
+#    y_low_test,
+#    rf_low_prediction
+#)
+
+#print()
+
+#print(f"Random Forest High MAE: {high_mae_rf}")
+#print(f"Random Forest Low MAE: {low_mae_rf}")
+
+
+# this produced bad results so not gona consider it
+
+# -------------- done with this find tuning of the model now we have to give the actual current date date for it to make the predictions for the next day 
+
+latest_data = pd.DataFrame([{
+    "Open": latest_day["Open"],
+    "High": latest_day["High"],
+    "Low": latest_day["Low"],
+    "Close": latest_day["Close"],
+    "Previous_Close": latest_day["Previous_Close"],
+    "Previous_High": latest_day["Previous_High"],
+    "Previous_Low": latest_day["Previous_Low"]
+}])
+
+# the reason i added [] as it treats all of this as a single row
+
+print("Data being given to the model:")
+#print(latest_data)
+
+
+# Predict the next day's High
+predicted_high = high_model_lr.predict(latest_data)[0]
+
+# it means we r passing the latest_data data to the model and once done then we get the result, then [0] says from the result i want u to take the 0th element
+
+# predict the next day's low
+
+predicted_low = low_model_lr.predict(latest_data)[0]
+
+
+print("===== NEXT DAY PREDICTION =====")
+print(f"Predicted High: {predicted_high:.2f}")
+print(f"Predicted Low:  {predicted_low:.2f}")
