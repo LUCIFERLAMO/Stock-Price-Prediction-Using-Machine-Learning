@@ -1,370 +1,333 @@
 import requests
-from bs4 import BeautifulSoup
 
-
-# -------------------- Requesting the website from the server and stroing the data in a variable named response ------------------------------------
-
-url = "https://www.indiainfoline.com/company/gmr-airports-ltd-historical-data"
+url = "https://stockanalysis.com/quote/nse/GMRAIRPORT/history/"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9"
+    "User-Agent": "Mozilla/5.0"
 }
 
-response = requests.get(url,headers=headers)
+response = requests.get(url, headers=headers)
 
-print(response.status_code)
-#print(response.text[:1000])
+if response.status_code == 200:
+    print("Connected Successfully ")
+else:
+    print(f"Error cox of {response.status_code}.")
+    exit(0)
 
+# --- giving the response to beautiful soup
 
-# ----------------------- passing the data to beautiful soup -----------------------------
+from bs4 import BeautifulSoup
 
-soup = BeautifulSoup(response.text,"html.parser") #takes that messy HTML and organizes it so Python can easily understand and search it.
+soup = BeautifulSoup(response.text,"html.parser")
 
-# print(soup.title) # Find the <title> of this webpage and print it
+# ---- Finding all the tables 
 
 tables = soup.find_all("table")
-#print(f"Number of tables {len(tables)}")
+table = tables[0]
 
 
-# choosing the first table
+# ------- finding the table from the website and storing it in a vairable called rows ----
 
-table = tables[0] 
-
-# getting the contents of the table and removing unwanted tags
-
-values = soup.get_text(" ",strip=True)[:2000]
-
-# soup.get_text -> takes only the text from the content it is given 
-# " " -> it adds space btw each word it finds
-# strip=True -> it removes the unwanted newline space btw the word
-# [:2000] -> we dont want the entire content just give the first 2000 words
-
-#print(values)
-
-# ------------ finding the number of rows using tr (number of rows) --------------------------
-
-rows = soup.find_all("tr")
-# print(rows[1]) # selecting and print the first row using 1 not 0 as 0 will show all the data 
+rows = table.find_all("tr")
 
 
+# ---- Extracting all the 50 rows
 
-# ---------- taking the contents of the first row -----------------
+stock_data = []
 
-content_of_cell = soup.find_all("td")
-#print(len(content_of_cell))
+for row in rows[1:]:
+    cells = row.find_all("td")
 
-# printing the contents
+    date = cells[0].get_text(strip=True)
+    open_price = cells[1].get_text(strip=True)
+    high = cells[2].get_text(strip=True)
+    low = cells[3].get_text(strip=True)
+    close = cells[4].get_text(strip=True)
+    adj_close = cells[5].get_text(strip=True)
+    change = cells[6].get_text(strip=True)
+    volume = cells[7].get_text(strip=True)
 
-#for content in content_of_cell:
-    #print(content.get_text(" ",strip=True))
-
-
-# taking ever cell which will be like <td> 100 </td>
-# then only extrcting the content and leaving the word so <td> 100 </td> )
-
-
-
-# -----------------------------------
-
-
-# now we r taking onlt the td values so that we can iterate through each value seprately properly 
-cells = rows[1].find_all("td")
-
-
-#0 → Date
-#1 → Open
-#2 → High
-#3 → Low
-#4 → Close
-
-#date = cells[0].get_text(strip=True) # getting the text in the first td value without tags
-#high = cells[2].get_text(strip=True)
-#low = cells[3].get_text(strip=True)
-
-#print("Date:", date)
-#print("High:", high)
-#print("Low:", low)
+    stock_data.append([
+        date,
+        open_price,
+        high,
+        low,
+        close,
+        adj_close,
+        change,
+        volume
+    ])
 
 
-# ------------- printing the date, high, lows of all the rows we found ------------------
-
-
-
-dates_and_high_and_low = []
-for row in rows[1:]: # we r satrting from 1 as 0 is the header
-
-    cell = row.find_all("td") # now we can get the idividual values of the row as cell will not hold like (<td> 100 <td>, <td> 500 <td>, etc)
-
-    date = cell[0].get_text(strip=True)
-    high = cell[2].get_text(strip=True)
-    low = cell[3].get_text(strip=True)
-
-    # adding more features to imporve the prediction
-
-    open_price = cell[1].get_text(strip=True)
-    close = cell[4].get_text(strip=True)
-    trades = cell[5].get_text(strip=True)
-
-    #print(f"date: {date}, high: {high}, low: {low}")
-    dates_and_high_and_low.append([date,open_price,high,low,close,trades])
-
-
-
-
-
-# now passing the list and making it into a data frame
+# ---- Feading the recirds recived to pandas 
 
 import pandas as pd
 
-df = pd.DataFrame(dates_and_high_and_low,columns=["Date","open_price","high","low","close","trades"])
-#print(df)
+df = pd.DataFrame(
+    stock_data,
+    columns=[
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Adj_Close",
+        "Change",
+        "Volume"
+    ]
+)
 
 
-#print(df.info())
+# --- converting the ojbject types into numeric data 
+
+df["Date"] = pd.to_datetime(df["Date"])
+df["Change"] = pd.to_numeric(df["Change"].str.replace("%",""))
+df["Volume"] = pd.to_numeric(df["Volume"].str.replace(",",""))
+
+numeric_column = ["Open","High","Low","Close","Adj_Close"]
+
+for col in numeric_column:
+    df[col] = pd.to_numeric(df[col])
 
 
-# ---------- converting the string high and low to numarice numbers -------------
+# ---- sorting the data to assecnding order of date
 
-df["high"] = pd.to_numeric(df["high"])
-df["low"] = pd.to_numeric(df["low"])
-df["Date"] = pd.to_datetime(df["Date"]) # converting it as an actual date object so that python can handle it as an date 
-
-df["open_price"] = pd.to_numeric(df["open_price"])
-df["close"] = pd.to_numeric(df["close"])
-df["trades"] = pd.to_numeric(df["trades"].str.replace(",",""))
-
-#print(df.info())
+df = df.sort_values("Date").reset_index(drop=True)
 
 
-# checking if the data is clean 
+# --- creating tmr high and tmr low
 
-#print(df.head())
-#print("\nNumber of records:", len(df))
-#print("\nMissing values:")
-#print(df.isnull().sum()) # sums up if there r any missing values in each column and shows it here
+df["Next_high"] = df["High"].shift(-1)
+df["Next_low"] = df["Low"].shift(-1)
 
-
-# done for the day 
-
+df["Previous_Close"] = df["Close"].shift(1)
+df["Previous_High"] = df["High"].shift(1)
+df["Previous_Low"] = df["Low"].shift(1)
 
 
-# sorting the values in ascending order 
+# --- Making a sperate copy to train the model
 
-df = df.sort_values(["Date"])
-#print(df)
-
-# now we r adding a new column called next_high
-# we will use the next values to terain the model this was the high and low of the next day 
-df["Next_high"] = df["high"].shift(-1) # it removes the top value and appends the value below the top to the top, and the last value below that column will be nil
-df["Next_Low"] = df["low"].shift(-1)
-
-# we will use the next values to terain the model this was the high and low of the previous day 
-
-
-df["previous_high"] = df["high"].shift(1)
-df["previous_low"] = df["low"].shift(1)
-df["previous_close"] = df["close"].shift(1)
-
-# why r we doing this ?
-
-# as we r doing supervised learning where we give the question and the label for it
-# we r proving the question what is the stock price for monday and we r giving the answer for it so that it learns the pattern
-
-#print(df)
-
-# now we have a nan value in the botton of the 2 new columns we created so we will remove them
-
-df = df.dropna()
-
-print(df.head())
-#print(df.columns)
-
-# ------------------- this is what we will give to the model ----------
+model_data = df.dropna(
+    subset=[
+        "Previous_Close",
+        "Previous_High",
+        "Previous_Low",
+        "Next_high",
+        "Next_low"
+    ]
+).copy()
 
 
-# this is the high and low we will show to the model stored in a variable called x
-x = df[["previous_high", "previous_low","high", "low", "close",]]
+latest_day = df.iloc[-1]
+
+latest_date = latest_day["Date"]
 
 
-# the high and low values which the mmodel will use to learn the pattern from its prediction to the actual value
-Y_high = df["Next_high"]
-Y_low = df["Next_Low"]
+#  ------ we will now train the model using only some features 
+
+# ---- Features 
+
+x = model_data[
+    [
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Previous_Close",
+        "Previous_High",
+        "Previous_Low"
+    ]
+]
 
 
+# --- target (what we want the model to learn)
 
-# ------------------ now we will divide the data into 2 halfs (one for training and one for testing) ---------------'
-
-
-
-# Training data → the model learns patterns from it.
-# Testing data → we give the model data it hasn't seen before and check how accurate its predictions are
-
-split_data = int(len(x) * 0.8) # taking 80 ercentage of the data as training and rest 20 as testing
-
-# so if we have 100 rows then we will take 80 of them for training the model and rest 20 for testing 
+y_high = model_data["Next_high"]
+y_low = model_data["Next_low"]
 
 
-# spliting the data 
-x_train = x.iloc[:split_data] 
+# ---- train the model ----
+
+# -- split the data 
+
+split_data = int(len(x) * 0.8)
+
+
+# ----features
+
+x_train = x.iloc[:split_data]
 x_test = x.iloc[split_data:]
 
-# spliting the high
-y_high_train = Y_high.iloc[:split_data] 
-y_high_test = Y_high.iloc[split_data:] # same as y_high[:split_data] we r using iloc jist to specifically tell we want to split suing the index
 
-# spliting the low
-y_low_train = Y_low.iloc[:split_data]
-y_low_test = Y_low.iloc[split_data:]
+# -- dividing the next high
 
-#training and testing dates
-
-Train_date = df["Date"].iloc[:split_data]
-Test_date = df["Date"].iloc[split_data:]
+y_high_train = y_high.iloc[:split_data]
+y_high_test = y_high.iloc[split_data:]
 
 
-#print("===== TRAINING DATA =====")
-#print(x_train)
+# -- dividing the next low
 
-#print("\n===== TESTING DATA =====")
-#print(x_test)
+y_low_train = y_low.iloc[:split_data]
+y_low_test = y_low.iloc[split_data:]
 
-#print("\n===== TRAINING TARGET: NEXT HIGH =====")
-#print(y_high_train)
 
-#print("\n===== TESTING TARGET: NEXT HIGH =====")
-#print(y_high_test)
+# -- dividing the dates
 
-#print("\n===== TRAINING TARGET: NEXT LOW =====")
-#print(y_low_train)
+train_dates = model_data["Date"].iloc[:split_data]
+test_dates = model_data["Date"].iloc[split_data:]
 
-#print("\n===== TESTING TARGET: NEXT LOW =====")
-#print(y_low_test)
 
-# --------------------------------------------------------
-# we r using regression model
-# A regression model is a machine-learning model used to predict a numerical value.
+# ----- training the model
 
 from sklearn.linear_model import LinearRegression
 
-# Create a Linear Regression model for predicting tomorrow's High, think of it as a empty student   
-high_model = LinearRegression()
+# --- high model
 
-#print(high_model)
+high_model_lr = LinearRegression()
 
-
-# -------------------- Training to predict for the high value ----------------------
-
-# so to train the model we use fit(data,label)
-
-high_model.fit(x_train,y_high_train) # its like saying this is the data to the mode and this is answer now find the relation btw them
-#print("High prediction model trained successfully.")
+high_model_lr.fit(x_train,y_high_train)
 
 
-# now we r seeing how well the model predicts
+# --- low model
 
-model_predictions = high_model.predict(x_test)
+low_model_lr = LinearRegression()
 
-#print("Actual values:")
-#print(y_high_test)
-
-#print("predicted values:")
-#print(model_predictions)
-
-# ----------------------------- training to predict for the lower value -------------------
-
-lower_model = LinearRegression()
-
-# teach the model
-
-lower_model.fit(x_train,y_low_train)
-#print("lower Trained")
-
-# predicting the values and comparing it with the actual results
-
-predict_lower_values = lower_model.predict(x_test)
-
-#print("Actual Data:")
-#print(y_low_test)
+low_model_lr.fit(x_train,y_low_train)
 
 
-#print("predicted values:")
-#print(predict_lower_values)
+# ---- make the predictions
 
-# ----------------------------------------------------------------------
+lr_high_prediction = high_model_lr.predict(x_test)
 
-# now that we have trained out model we need to see how much error did the model make compared to the actual value
+lr_low_prediction = low_model_lr.predict(x_test)
 
-# we will use Mean Absolute Error (MAE).
-# MAE tells us, on average, how many rupees our prediction was away from the actual value.
+
+# --- check the MAE
 
 from sklearn.metrics import mean_absolute_error
 
-# syntax = mean_absolute_error(test_data,model_predictions)
-
- # calculate the average error for High predictions
-
-high_mae = mean_absolute_error(y_high_test,model_predictions)
-
-
-# calculate the average error for low predictions
-
-low_mae = mean_absolute_error(y_low_test,predict_lower_values)
-
-
-
-#print("High prediction MAE:", high_mae)
-#print("Low prediction MAE:", low_mae)
-
-# creating a dataframe to see the date the actual high and the prdicted high and low and predicted low for good refference 
-
-result = pd.DataFrame({
-    "Date":Test_date,
-    "Actual high":y_high_test,
-    "Predicted high":model_predictions,
-    "Actual low":y_low_test,
-    "Predicted low":predict_lower_values
-})
-
-#print(result)
-
-
-# ---------------------- we will try Random forest regression ----------------
-# random forest regression os good for non linear (realtion that changes based on the situation)
-# Random Forest = many decision trees working together.
-
-from sklearn.ensemble import RandomForestRegressor
-
-predict_high_model_rf = RandomForestRegressor(
-    n_estimators= 100, # creating 100 decision trees where each will make a -prediction on what the high will be for tmr and the avg will be taken of all the 100 predictions made
-    random_state=42 
+high_mae_lr = mean_absolute_error(
+    y_high_test,
+    lr_high_prediction
 )
 
-predict_low_model_rf = RandomForestRegressor(
-    n_estimators= 100,
-    random_state=42
+low_mae_lr = mean_absolute_error(
+    y_low_test,
+    lr_low_prediction
 )
 
-# ----- train ------
 
-predict_high_model_rf.fit(x_train,y_high_train)
+# -------------- giving the latest data to the model
 
-predict_low_model_rf.fit(x_train,y_low_train)
+latest_data = pd.DataFrame([{
+    "Open": latest_day["Open"],
+    "High": latest_day["High"],
+    "Low": latest_day["Low"],
+    "Close": latest_day["Close"],
+    "Previous_Close": latest_day["Previous_Close"],
+    "Previous_High": latest_day["Previous_High"],
+    "Previous_Low": latest_day["Previous_Low"]
+}])
 
-# ----- predict -----
 
-rf_high_predict = predict_high_model_rf.predict(x_test)
+# --- predict the next day's High
 
-rf_low_predict = predict_low_model_rf.predict(x_test)
+predicted_high = high_model_lr.predict(latest_data)[0]
 
-# ---- calculate MAE ------
 
-rf_high_MAE = mean_absolute_error(y_high_test,rf_high_predict)
+# --- predict the next day's Low
 
-rf_low_MAE = mean_absolute_error(y_low_test,rf_low_predict)
+predicted_low = low_model_lr.predict(latest_data)[0]
 
-# ----- print -----
 
-print("Random Forest High MAE:", rf_high_MAE)
-print("Random Forest Low MAE:", rf_low_MAE)
+# ---------------- TKINTER GUI ----------------
+
+import tkinter as tk
+
+root = tk.Tk()
+
+root.title("Stock Price Predictor")
+root.geometry("600x450")
+
+
+# ---------------- TITLE ----------------
+
+title_label = tk.Label(
+    root,
+    text="STOCK PRICE PREDICTOR",
+    font=("Arial",22,"bold")
+)
+
+title_label.pack(pady=40)
+
+
+# ---------------- STOCK NAME ----------------
+
+stock_name = tk.Label(
+    root,
+    text="GMR Airport",
+    font=("Arial",16)
+)
+
+stock_name.pack(pady=10)
+
+
+# ---------------- LATEST DATE ----------------
+
+day = tk.Label(
+    root,
+    text=f"Latest Trading Day: {latest_date.strftime('%d-%b-%Y')}",
+    font=("Arial",12)
+)
+
+day.pack(pady=10)
+
+
+# ---------------- BUTTON FUNCTION ----------------
+
+def predict():
+
+    result_label.config(
+        text=f"Predicted High: ₹{predicted_high:.2f}\n"
+             f"Predicted Low: ₹{predicted_low:.2f}"
+    )
+
+
+# ---------------- PREDICT BUTTON ----------------
+
+predict_button = tk.Button(
+    root,
+    text="PREDICT",
+    font=("Arial",14,"bold"),
+    command=predict
+)
+
+predict_button.pack(pady=20)
+
+
+# ---------------- RESULT ----------------
+
+result_label = tk.Label(
+    root,
+    text="",
+    font=("Arial",14)
+)
+
+result_label.pack(pady=10)
+
+
+# ---------------- MODEL ACCURACY ----------------
+
+accuracy_label = tk.Label(
+    root,
+    text=f"High MAE: ₹{high_mae_lr:.2f}\n"
+         f"Low MAE: ₹{low_mae_lr:.2f}",
+    font=("Arial",11)
+)
+
+accuracy_label.pack(pady=10)
+
+
+# ---------------- RUN GUI ----------------
+
+root.mainloop()
