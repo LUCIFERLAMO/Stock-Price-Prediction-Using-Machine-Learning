@@ -81,13 +81,13 @@ df = pd.DataFrame(
 # --- converting the ojbject types into numeric data 
 
 df["Date"] = pd.to_datetime(df["Date"])
-df["Change"] = pd.to_numeric(df["Change"].str.replace("%",""))
-df["Volume"] = pd.to_numeric(df["Volume"].str.replace(",",""))
+df["Change"] = pd.to_numeric(df["Change"].str.replace("%",""), errors="coerce")
+df["Volume"] = pd.to_numeric(df["Volume"].str.replace(",",""), errors="coerce")
 
 numeric_column = ["Open","High","Low","Close","Adj_Close"]
 
 for col in numeric_column:
-    df[col] = pd.to_numeric(df[col])
+    df[col] = pd.to_numeric(df[col], errors="coerce")
 
 
 # ---- sorting the data to assecnding order of date
@@ -109,6 +109,10 @@ df["Previous_Low"] = df["Low"].shift(1)
 
 model_data = df.dropna(
     subset=[
+        "Open",
+        "High",
+        "Low",
+        "Close",
         "Previous_Close",
         "Previous_High",
         "Previous_Low",
