@@ -11,22 +11,22 @@ response = requests.get(url, headers=headers)
 if response.status_code == 200:
     print("Connected Successfully ")
 else:
-    print(f"Error cox of {response.status_code}.")
+    print(f"Error because of {response.status_code}.")
     exit(0)
 
 # --- giving the response to beautiful soup
 
 from bs4 import BeautifulSoup
 
-soup = BeautifulSoup(response.text,"html.parser")
+soup = BeautifulSoup(response.text, "html.parser")
 
-# ---- Finding all the tables 
+# ---- Finding all the tables
 
 tables = soup.find_all("table")
 table = tables[0]
 
 
-# ------- finding the table from the website and storing it in a vairable called rows ----
+# ------- finding the table from the website and storing it in a variable called rows ----
 
 rows = table.find_all("tr")
 
@@ -59,7 +59,7 @@ for row in rows[1:]:
     ])
 
 
-# ---- Feading the recirds recived to pandas 
+# ---- Feeding the records received to pandas
 
 import pandas as pd
 
@@ -78,24 +78,24 @@ df = pd.DataFrame(
 )
 
 
-# --- converting the ojbject types into numeric data 
+# --- converting the object types into numeric data
 
 df["Date"] = pd.to_datetime(df["Date"])
-df["Change"] = pd.to_numeric(df["Change"].str.replace("%",""), errors="coerce")
-df["Volume"] = pd.to_numeric(df["Volume"].str.replace(",",""), errors="coerce")
+df["Change"] = pd.to_numeric(df["Change"].str.replace("%", ""), errors="coerce")
+df["Volume"] = pd.to_numeric(df["Volume"].str.replace(",", ""), errors="coerce") # converts it into nan when an error appears
 
-numeric_column = ["Open","High","Low","Close","Adj_Close"]
+numeric_column = ["Open", "High", "Low", "Close", "Adj_Close"]
 
 for col in numeric_column:
     df[col] = pd.to_numeric(df[col], errors="coerce")
 
 
-# ---- sorting the data to assecnding order of date
+# ---- sorting the data to ascending order of date
 
 df = df.sort_values("Date").reset_index(drop=True)
 
 
-# --- creating tmr high and tmr low
+# --- creating tomorrow's high and tomorrow's low
 
 df["Next_high"] = df["High"].shift(-1)
 df["Next_low"] = df["Low"].shift(-1)
@@ -105,7 +105,7 @@ df["Previous_High"] = df["High"].shift(1)
 df["Previous_Low"] = df["Low"].shift(1)
 
 
-# --- Making a sperate copy to train the model
+# --- Making a separate copy to train the model
 
 model_data = df.dropna(
     subset=[
@@ -127,9 +127,9 @@ latest_day = df.iloc[-1]
 latest_date = latest_day["Date"]
 
 
-#  ------ we will now train the model using only some features 
+#  ------ we will now train the model using only some features
 
-# ---- Features 
+# ---- Features
 
 x = model_data[
     [
@@ -152,7 +152,7 @@ y_low = model_data["Next_low"]
 
 # ---- train the model ----
 
-# -- split the data 
+# -- split the data
 
 split_data = int(len(x) * 0.8)
 
@@ -189,14 +189,14 @@ from sklearn.linear_model import LinearRegression
 
 high_model_lr = LinearRegression()
 
-high_model_lr.fit(x_train,y_high_train)
+high_model_lr.fit(x_train, y_high_train)
 
 
 # --- low model
 
 low_model_lr = LinearRegression()
 
-low_model_lr.fit(x_train,y_low_train)
+low_model_lr.fit(x_train, y_low_train)
 
 
 # ---- make the predictions
@@ -251,7 +251,7 @@ import tkinter as tk
 root = tk.Tk()
 
 root.title("Stock Price Predictor")
-root.geometry("600x450")
+root.geometry("800x1000")
 
 
 # ---------------- TITLE ----------------
@@ -259,10 +259,10 @@ root.geometry("600x450")
 title_label = tk.Label(
     root,
     text="STOCK PRICE PREDICTOR",
-    font=("Arial",22,"bold")
+    font=("Arial", 22, "bold")
 )
 
-title_label.pack(pady=40)
+title_label.pack(pady=20)
 
 
 # ---------------- STOCK NAME ----------------
@@ -270,10 +270,10 @@ title_label.pack(pady=40)
 stock_name = tk.Label(
     root,
     text="GMR Airport",
-    font=("Arial",16)
+    font=("Arial", 16)
 )
 
-stock_name.pack(pady=10)
+stock_name.pack(pady=5)
 
 
 # ---------------- LATEST DATE ----------------
@@ -281,10 +281,10 @@ stock_name.pack(pady=10)
 day = tk.Label(
     root,
     text=f"Latest Trading Day: {latest_date.strftime('%d-%b-%Y')}",
-    font=("Arial",12)
+    font=("Arial", 12)
 )
 
-day.pack(pady=10)
+day.pack(pady=5)
 
 
 # ---------------- BUTTON FUNCTION ----------------
@@ -302,11 +302,11 @@ def predict():
 predict_button = tk.Button(
     root,
     text="PREDICT",
-    font=("Arial",14,"bold"),
+    font=("Arial", 14, "bold"),
     command=predict
 )
 
-predict_button.pack(pady=20)
+predict_button.pack(pady=15)
 
 
 # ---------------- RESULT ----------------
@@ -314,10 +314,10 @@ predict_button.pack(pady=20)
 result_label = tk.Label(
     root,
     text="",
-    font=("Arial",14)
+    font=("Arial", 14)
 )
 
-result_label.pack(pady=10)
+result_label.pack(pady=5)
 
 
 # ---------------- MODEL ACCURACY ----------------
@@ -326,10 +326,48 @@ accuracy_label = tk.Label(
     root,
     text=f"High MAE: ₹{high_mae_lr:.2f}\n"
          f"Low MAE: ₹{low_mae_lr:.2f}",
-    font=("Arial",11)
+    font=("Arial", 11)
 )
 
-accuracy_label.pack(pady=10)
+accuracy_label.pack(pady=5)
+
+
+# ---------------- CHART: ACTUAL vs PREDICTED ----------------
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+fig, (ax_high, ax_low) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
+
+# --- High subplot ---
+ax_high.plot(test_dates, y_high_test.values, label="Actual High",
+             color="green", marker="o", linewidth=2)
+ax_high.plot(test_dates, lr_high_prediction, label="Predicted High",
+             color="orange", marker="x", linewidth=2, linestyle="--")
+ax_high.set_title("High: Actual vs Predicted")
+ax_high.set_ylabel("Price (₹)")
+ax_high.grid(True, alpha=0.3)
+ax_high.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
+# --- Low subplot ---
+ax_low.plot(test_dates, y_low_test.values, label="Actual Low",
+            color="red", marker="o", linewidth=2)
+ax_low.plot(test_dates, lr_low_prediction, label="Predicted Low",
+            color="blue", marker="x", linewidth=2, linestyle="--")
+ax_low.set_title("Low: Actual vs Predicted")
+ax_low.set_xlabel("Date")
+ax_low.set_ylabel("Price (₹)")
+ax_low.grid(True, alpha=0.3)
+ax_low.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
+ax_low.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
+fig.autofmt_xdate()
+fig.tight_layout()
+
+canvas = FigureCanvasTkAgg(fig, master=root)
+canvas.draw()
+canvas.get_tk_widget().pack(pady=10, fill="both", expand=True)
 
 
 # ---------------- RUN GUI ----------------
